@@ -4,8 +4,6 @@ import {
   Bold,
   Italic,
   Underline,
-  Type,
-  Image as ImageIcon,
   Trash2,
   Plus,
   Minus,
@@ -20,104 +18,101 @@ const Controls = () => {
     removeTextBox,
     removeSticker,
   } = useEditorStore();
-  
+
   if (!selectedElement) return null;
-  
-  const element =
-    selectedElement.type === 'text'
-      ? textBoxes.find((box) => box.id === selectedElement.id)
-      : null;
-  
+
+  const isText = selectedElement.type === 'text';
+  const element = isText
+    ? textBoxes.find((box) => box.id === selectedElement.id)
+    : null;
+
   const handleFontSizeChange = (delta) => {
-    if (element) {
-      updateTextBox(element.id, {
-        fontSize: Math.max(12, Math.min(72, element.fontSize + delta)),
-      });
-    }
+    if (!element) return;
+    const newSize = Math.max(12, Math.min(72, element.fontSize + delta));
+    updateTextBox(element.id, { fontSize: newSize });
   };
-  
-  const handleStyleChange = (style) => {
-    if (element) {
-      updateTextBox(element.id, {
-        fontStyle: {
-          ...element.fontStyle,
-          [style]: !element.fontStyle[style],
-        },
-      });
-    }
+
+  const handleStyleToggle = (style) => {
+    if (!element) return;
+    updateTextBox(element.id, {
+      fontStyle: {
+        ...element.fontStyle,
+        [style]: !element.fontStyle[style],
+      },
+    });
   };
-  
+
   const handleColorChange = (color) => {
-    if (element) {
-      updateTextBox(element.id, { color });
-    }
+    if (!element) return;
+    updateTextBox(element.id, { color });
   };
-  
+
   const handleDelete = () => {
-    if (selectedElement.type === 'text') {
+    if (isText) {
       removeTextBox(selectedElement.id);
     } else if (selectedElement.type === 'sticker') {
       removeSticker(selectedElement.id);
     }
   };
-  
+
   return (
-    <div className="absolute right-4 top-4 space-y-4 rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800">
-      {selectedElement.type === 'text' && element && (
+    <div className="absolute right-4 top-4 space-y-4 rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800 z-50">
+      {isText && element && (
         <>
+          {/* Font Size Controls */}
           <div className="flex items-center justify-between space-x-2">
             <button
               onClick={() => handleFontSizeChange(-2)}
               className="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Decrease font size"
             >
               <Minus size={16} />
             </button>
-            <span className="min-w-[3ch] text-center">{element.fontSize}</span>
+            <span className="min-w-[3ch] text-center font-medium">{element.fontSize}</span>
             <button
               onClick={() => handleFontSizeChange(2)}
               className="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Increase font size"
             >
               <Plus size={16} />
             </button>
           </div>
-          
+
+          {/* Text Style Toggles */}
           <div className="flex space-x-2">
-            <button
-              onClick={() => handleStyleChange('bold')}
-              className={`rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                element.fontStyle.bold ? 'bg-primary-100 dark:bg-primary-900' : ''
-              }`}
-            >
-              <Bold size={16} />
-            </button>
-            <button
-              onClick={() => handleStyleChange('italic')}
-              className={`rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                element.fontStyle.italic ? 'bg-primary-100 dark:bg-primary-900' : ''
-              }`}
-            >
-              <Italic size={16} />
-            </button>
-            <button
-              onClick={() => handleStyleChange('underline')}
-              className={`rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                element.fontStyle.underline ? 'bg-primary-100 dark:bg-primary-900' : ''
-              }`}
-            >
-              <Underline size={16} />
-            </button>
+            <StyleToggle
+              active={element.fontStyle.bold}
+              icon={Bold}
+              onClick={() => handleStyleToggle('bold')}
+              label="Bold"
+            />
+            <StyleToggle
+              active={element.fontStyle.italic}
+              icon={Italic}
+              onClick={() => handleStyleToggle('italic')}
+              label="Italic"
+            />
+            <StyleToggle
+              active={element.fontStyle.underline}
+              icon={Underline}
+              onClick={() => handleStyleToggle('underline')}
+              label="Underline"
+            />
           </div>
-          
+
+          {/* Color Picker */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium">Color</label>
+            <label className="block text-sm font-medium">Text Color</label>
             <HexColorPicker color={element.color} onChange={handleColorChange} />
           </div>
         </>
       )}
-      
+
+      {/* Delete Button */}
       <button
         onClick={handleDelete}
-        className="flex w-full items-center justify-center space-x-2 rounded-md bg-error-100 p-2 text-error-700 hover:bg-error-200 dark:bg-error-900/20 dark:text-error-400 dark:hover:bg-error-900/40"
+        className="flex w-full items-center justify-center space-x-2 rounded-md bg-red-100 p-2 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+        title="Delete selected element"
       >
         <Trash2 size={16} />
         <span>Delete</span>
@@ -125,5 +120,18 @@ const Controls = () => {
     </div>
   );
 };
+
+// Reusable toggle button for styles
+const StyleToggle = ({ active, icon: Icon, onClick, label }) => (
+  <button
+    onClick={onClick}
+    className={`rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+      active ? 'bg-primary-100 dark:bg-primary-900' : ''
+    }`}
+    title={label}
+  >
+    <Icon size={16} />
+  </button>
+);
 
 export default Controls;
