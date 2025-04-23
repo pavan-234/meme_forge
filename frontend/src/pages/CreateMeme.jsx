@@ -2,72 +2,83 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
+
 import Canvas from '../components/editor/Canvas';
 import Toolbar from '../components/editor/Toolbar';
 import Loading from '../components/Loading';
+
 import { createMeme } from '../api/memeAPI';
 import { getRandomTemplate } from '../api/templateAPI';
+
 import useEditorStore from '../store/editorStore';
 import { toPng } from 'html-to-image';
 
 const CreateMeme = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  
-  const { template, textBoxes, stickers, setTemplate, clearEditor } = useEditorStore();
-  
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const {
+    template,
+    textBoxes,
+    stickers,
+    setTemplate,
+    clearEditor
+  } = useEditorStore();
+
   useEffect(() => {
     loadRandomTemplate();
-    return () => clearEditor();
+    return () => clearEditor(); // cleanup on unmount
   }, []);
-  
+
   const loadRandomTemplate = async () => {
     try {
       setIsLoading(true);
-      const template = await getRandomTemplate();
-      setTemplate(template);
+      const tmpl = await getRandomTemplate();
+      setTemplate(tmpl);
     } catch (err) {
-      setError('Failed to load template. Please try again.');
-      console.error('Error loading template:', err);
+      console.error('Template load error:', err);
+      setError('😢 Failed to load meme template. Please refresh.');
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const handleSave = async () => {
     const canvas = document.querySelector('#meme-canvas');
-    if (!canvas || !template) return;
-    
+    if (!canvas || !template) {
+      setError('Canvas not found or template not loaded!');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      
-      // Generate meme image
+      setError(null);
+
+      // Convert DOM to image
       const dataUrl = await toPng(canvas, { quality: 0.95 });
-      
-      // Convert data URL to Blob
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      
-      // Create form data
+      const blob = await (await fetch(dataUrl)).blob();
+
+      // Prepare form data
       const formData = new FormData();
       formData.append('image', blob, 'meme.png');
       formData.append('title', template.name);
       formData.append('template', template._id);
       formData.append('textBoxes', JSON.stringify(textBoxes));
       formData.append('stickers', JSON.stringify(stickers));
-      
+
       await createMeme(formData);
       navigate('/');
     } catch (err) {
-      console.error('Error saving meme:', err);
-      setError('Failed to save meme. Please try again.');
+      console.error('Save error:', err);
+      setError('❌ Failed to save meme. Try again!');
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -75,7 +86,7 @@ const CreateMeme = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6">
@@ -88,7 +99,7 @@ const CreateMeme = () => {
           Back to gallery
         </motion.button>
       </div>
-      
+
       <motion.div
         className="space-y-6"
         initial={{ opacity: 0, y: 20 }}
@@ -96,13 +107,12 @@ const CreateMeme = () => {
         transition={{ duration: 0.3 }}
       >
         {error && (
-          <div className="rounded-md bg-error-50 p-4 text-error-700 dark:bg-error-900/20 dark:text-error-400">
+          <div className="rounded-md bg-red-100 p-4 text-red-700 dark:bg-red-900/30 dark:text-red-400">
             {error}
           </div>
         )}
-        
-        <Toolbar onSave={handleSave} />
-        
+
+        <Toolbar onSave={handleSave} isSubmitting={isSubmitting} />
         <div id="meme-canvas">
           <Canvas />
         </div>
