@@ -17,5 +17,3 @@ yarn-error.log*
 # uploads
 /uploads/*
 !/uploads/.gitkeep
-
-.env

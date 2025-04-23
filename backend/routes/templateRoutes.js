@@ -2,11 +2,12 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import {
-  getMemes,
-  getMemeById,
-  createMeme,
-  deleteMeme,
-} from '../controllers/memeController.js';
+  getTemplates,
+  getRandomTemplate,
+  searchTemplates,
+  uploadTemplate,
+  incrementTemplateUses,
+} from '../controllers/templateController.js';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     cb(
       null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
+      `template-${Date.now()}${path.extname(file.originalname)}`
     );
   },
 });
@@ -44,7 +45,9 @@ const upload = multer({
 });
 
 // Routes
-router.route('/').get(getMemes).post(upload.single('image'), createMeme);
-router.route('/:id').get(getMemeById).delete(deleteMeme);
+router.route('/').get(getTemplates).post(upload.single('image'), uploadTemplate);
+router.get('/random', getRandomTemplate);
+router.get('/search', searchTemplates);
+router.put('/:id/use', incrementTemplateUses);
 
 export default router;

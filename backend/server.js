@@ -1,12 +1,12 @@
-import dotenv from 'dotenv';
-dotenv.config();
 import express from 'express';
+import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import memeRoutes from './routes/memeRoutes.js';
+import templateRoutes from './routes/templateRoutes.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // Load environment variables
@@ -36,13 +36,12 @@ app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 // Routes
 app.use('/api/memes', memeRoutes);
+app.use('/api/templates', templateRoutes);
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
-  // Set static folder
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
   
-  // Any route that is not api will be redirected to index.html
   app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
   });

@@ -1,25 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Filter } from 'lucide-react';
 import MemeCard from '../components/MemeCard';
 import Loading from '../components/Loading';
+import SearchBar from '../components/SearchBar';
 import { getAllMemes, deleteMeme } from '../api/memeAPI';
 
 const Home = () => {
   const [memes, setMemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [category, setCategory] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  
+  const categories = [
+    { value: 'all', label: 'All' },
+    { value: 'funny', label: 'Funny' },
+    { value: 'sad', label: 'Sad' },
+    { value: 'reaction', label: 'Reaction' },
+    { value: 'gaming', label: 'Gaming' },
+    { value: 'other', label: 'Other' },
+  ];
   
   useEffect(() => {
     fetchMemes();
-  }, []);
+  }, [searchTerm, category, page]);
   
   const fetchMemes = async () => {
     try {
       setLoading(true);
-      const data = await getAllMemes();
-      setMemes(data);
+      const data = await getAllMemes({
+        page,
+        limit: 12,
+        category,
+        search: searchTerm,
+        sortBy: 'createdAt',
+      });
+      setMemes(data.memes);
+      setPagination(data.pagination);
       setError(null);
     } catch (err) {
       setError('Failed to load memes. Please try again later.');
@@ -27,6 +48,16 @@ const Home = () => {
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+    setPage(1);
+  };
+  
+  const handleCategoryChange = (e) => {
+    setCategory(e.target.value);
+    setPage(1);
   };
   
   const handleDelete = async (id) => {
@@ -41,7 +72,7 @@ const Home = () => {
     }
   };
   
-  if (loading) {
+  if (loading && page === 1) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Loading type="skeleton" />
@@ -49,10 +80,48 @@ const Home = () => {
     );
   }
   
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="rounded-lg bg-error-50 p-6 text-center dark:bg-error-900/20">
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex flex-col gap-6">
+        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">
+            Latest Memes
+          </h1>
+          
+          <Link to="/create">
+            <motion.button
+              className="btn btn-primary"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <PlusCircle size={18} className="mr-2" />
+              Create New Meme
+            </motion.button>
+          </Link>
+        </div>
+        
+        <div className="flex flex-col items-center gap-4 sm:flex-row">
+          <SearchBar onSearch={handleSearch} />
+          
+          <div className="flex items-center gap-2">
+            <Filter size={18} className="text-gray-500" />
+            <select
+              value={category}
+              onChange={handleCategoryChange}
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            >
+              {categories.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      {error && (
+        <div className="mb-8 rounded-lg bg-error-50 p-6 text-center dark:bg-error-900/20">
           <h2 className="mb-2 text-lg font-medium text-error-700 dark:text-error-400">
             {error}
           </h2>
@@ -63,36 +132,17 @@ const Home = () => {
             Try Again
           </button>
         </div>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">
-          Latest Memes
-        </h1>
-        
-        <Link to="/create">
-          <motion.button
-            className="btn btn-primary"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <PlusCircle size={18} className="mr-2" />
-            Create New Meme
-          </motion.button>
-        </Link>
-      </div>
+      )}
       
       {memes.length === 0 ? (
         <div className="rounded-lg bg-gray-50 p-12 text-center dark:bg-gray-800">
           <h2 className="mb-2 text-xl font-medium text-gray-700 dark:text-gray-300">
-            No memes yet
+            No memes found
           </h2>
           <p className="mb-6 text-gray-500 dark:text-gray-400">
-            Be the first to create an awesome meme!
+            {searchTerm
+              ? 'Try different search terms or filters'
+              : 'Be the first to create an awesome meme!'}
           </p>
           <Link to="/create">
             <motion.button
@@ -106,17 +156,39 @@ const Home = () => {
           </Link>
         </div>
       ) : (
-        <AnimatePresence>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {memes.map((meme) => (
-              <MemeCard 
-                key={meme._id} 
-                meme={meme} 
-                onDelete={handleDelete} 
-              />
-            ))}
-          </div>
-        </AnimatePresence>
+        <>
+          <AnimatePresence>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {memes.map((meme) => (
+                <MemeCard
+                  key={meme._id}
+                  meme={meme}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          </AnimatePresence>
+          
+          {pagination && pagination.pages > 1 && (
+            <div className="mt-8 flex justify-center gap-2">
+              {[...Array(pagination.pages)].map((_, i) => (
+                <motion.button
+                  key={i}
+                  onClick={() => setPage(i + 1)}
+                  className={`h-8 w-8 rounded-full ${
+                    page === i + 1
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {i + 1}
+                </motion.button>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
