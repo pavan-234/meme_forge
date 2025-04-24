@@ -5,15 +5,18 @@ const useEditorStore = create((set) => ({
   textBoxes: [],
   stickers: [],
   selectedElement: null,
+  canvasSize: { width: 0, height: 0 },
   
   setTemplate: (template) => set({ template }),
+  
+  setCanvasSize: (size) => set({ canvasSize: size }),
   
   addTextBox: (textBox) => set((state) => ({
     textBoxes: [...state.textBoxes, {
       id: Date.now(),
       text: 'Add text here',
-      x: 50,
-      y: 50,
+      x: state.canvasSize.width / 4,
+      y: state.canvasSize.height / 4,
       fontSize: 24,
       color: '#FFFFFF',
       fontStyle: {
@@ -22,7 +25,7 @@ const useEditorStore = create((set) => ({
         underline: false
       },
       outline: true,
-      width: 200,
+      width: state.canvasSize.width / 2,
       padding: 10,
       ...textBox
     }]
@@ -42,10 +45,10 @@ const useEditorStore = create((set) => ({
   addSticker: (sticker) => set((state) => ({
     stickers: [...state.stickers, {
       id: Date.now(),
-      x: 50,
-      y: 50,
-      width: 100,
-      height: 100,
+      x: state.canvasSize.width / 4,
+      y: state.canvasSize.height / 4,
+      width: state.canvasSize.width / 4,
+      height: state.canvasSize.width / 4,
       ...sticker
     }]
   })),
@@ -67,7 +70,8 @@ const useEditorStore = create((set) => ({
     template: null,
     textBoxes: [],
     stickers: [],
-    selectedElement: null
+    selectedElement: null,
+    canvasSize: { width: 0, height: 0 }
   })
 }));
 

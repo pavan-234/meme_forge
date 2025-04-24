@@ -5,13 +5,20 @@ import { Upload, X, Image as ImageIcon } from 'lucide-react';
 const MemeForm = ({ onSubmit, isSubmitting }) => {
   const [formData, setFormData] = useState({
     title: '',
-    topText: '',
-    bottomText: '',
+    category: 'other',
   });
   
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState('');
+
+  const categories = [
+    { value: 'funny', label: 'Funny' },
+    { value: 'sad', label: 'Sad' },
+    { value: 'reaction', label: 'Reaction' },
+    { value: 'gaming', label: 'Gaming' },
+    { value: 'other', label: 'Other' },
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,13 +29,11 @@ const MemeForm = ({ onSubmit, isSubmitting }) => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // Check if file is an image
     if (!file.type.match('image.*')) {
       setError('Please select an image file (png, jpg, jpeg)');
       return;
     }
     
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError('Image size should be less than 5MB');
       return;
@@ -37,7 +42,6 @@ const MemeForm = ({ onSubmit, isSubmitting }) => {
     setError('');
     setImage(file);
     
-    // Create preview
     const reader = new FileReader();
     reader.onload = () => {
       setImagePreview(reader.result);
@@ -65,8 +69,7 @@ const MemeForm = ({ onSubmit, isSubmitting }) => {
     
     const memeData = new FormData();
     memeData.append('title', formData.title);
-    memeData.append('topText', formData.topText);
-    memeData.append('bottomText', formData.bottomText);
+    memeData.append('category', formData.category);
     memeData.append('image', image);
     
     onSubmit(memeData);
@@ -106,43 +109,28 @@ const MemeForm = ({ onSubmit, isSubmitting }) => {
         />
       </div>
       
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label htmlFor="topText" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Top Text
-          </label>
-          <input
-            type="text"
-            id="topText"
-            name="topText"
-            value={formData.topText}
-            onChange={handleChange}
-            placeholder="Top text for your meme"
-            className="input mt-1"
-            maxLength={50}
-          />
-        </div>
-        
-        <div>
-          <label htmlFor="bottomText" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Bottom Text
-          </label>
-          <input
-            type="text"
-            id="bottomText"
-            name="bottomText"
-            value={formData.bottomText}
-            onChange={handleChange}
-            placeholder="Bottom text for your meme"
-            className="input mt-1"
-            maxLength={50}
-          />
-        </div>
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Category
+        </label>
+        <select
+          id="category"
+          name="category"
+          value={formData.category}
+          onChange={handleChange}
+          className="input mt-1"
+        >
+          {categories.map((cat) => (
+            <option key={cat.value} value={cat.value}>
+              {cat.label}
+            </option>
+          ))}
+        </select>
       </div>
       
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Meme Image
+          Upload Image
         </label>
         
         <div className="mt-1">
@@ -174,37 +162,19 @@ const MemeForm = ({ onSubmit, isSubmitting }) => {
             <div className="relative mt-2 overflow-hidden rounded-lg">
               <img 
                 src={imagePreview} 
-                alt="Meme preview" 
+                alt="Preview" 
                 className="h-64 w-full object-contain"
               />
               
-              {imagePreview && (
-                <motion.button 
-                  type="button"
-                  onClick={removeImage}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute right-2 top-2 rounded-full bg-white/80 p-1 text-gray-700 shadow-md hover:bg-white dark:bg-gray-800/80 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  <X size={16} />
-                </motion.button>
-              )}
-              
-              {formData.topText && (
-                <div className="absolute left-0 right-0 top-4 px-4 text-center">
-                  <p className="text-xl font-bold uppercase text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] md:text-2xl">
-                    {formData.topText}
-                  </p>
-                </div>
-              )}
-              
-              {formData.bottomText && (
-                <div className="absolute bottom-4 left-0 right-0 px-4 text-center">
-                  <p className="text-xl font-bold uppercase text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] md:text-2xl">
-                    {formData.bottomText}
-                  </p>
-                </div>
-              )}
+              <motion.button 
+                type="button"
+                onClick={removeImage}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute right-2 top-2 rounded-full bg-white/80 p-1 text-gray-700 shadow-md hover:bg-white dark:bg-gray-800/80 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <X size={16} />
+              </motion.button>
             </div>
           )}
         </div>
@@ -224,12 +194,12 @@ const MemeForm = ({ onSubmit, isSubmitting }) => {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>Creating...</span>
+              <span>Uploading...</span>
             </div>
           ) : (
             <div className="flex items-center space-x-2">
               <Upload size={18} />
-              <span>Create Meme</span>
+              <span>Upload Meme</span>
             </div>
           )}
         </motion.button>

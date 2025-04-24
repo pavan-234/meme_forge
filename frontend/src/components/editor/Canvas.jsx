@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { restrictToParentElement } from '@dnd-kit/modifiers';
 import TextBox from './TextBox';
@@ -7,7 +7,8 @@ import Controls from './Controls';
 import useEditorStore from '../../store/editorStore';
 
 const Canvas = () => {
-  const { template, textBoxes, stickers } = useEditorStore();
+  const canvasRef = useRef(null);
+  const { template, textBoxes, stickers, setCanvasSize } = useEditorStore();
   
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
@@ -23,6 +24,19 @@ const Canvas = () => {
   });
   
   const sensors = useSensors(mouseSensor, touchSensor);
+  
+  useEffect(() => {
+    if (canvasRef.current && template) {
+      const img = new Image();
+      img.src = template.template_url;
+      img.onload = () => {
+        const aspectRatio = img.height / img.width;
+        const width = canvasRef.current.offsetWidth;
+        const height = width * aspectRatio;
+        setCanvasSize({ width, height });
+      };
+    }
+  }, [template]);
   
   const handleDragEnd = (event) => {
     const { active, delta } = event;
@@ -55,11 +69,17 @@ const Canvas = () => {
       modifiers={[restrictToParentElement]}
       onDragEnd={handleDragEnd}
     >
-      <div className="relative mx-auto aspect-square w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-lg">
+      <div 
+        ref={canvasRef}
+        id="meme-canvas"
+        className="relative mx-auto overflow-hidden rounded-lg bg-white shadow-lg"
+        style={{ width: '100%', maxWidth: '600px' }}
+      >
         <img
           src={template.template_url}
           alt={template.name}
           className="h-full w-full object-contain"
+          draggable={false}
         />
         
         {textBoxes.map((textBox) => (

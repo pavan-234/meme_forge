@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
+import { ResizableBox } from 'react-resizable';
 import { CSS } from '@dnd-kit/utilities';
-import { Move, X } from 'lucide-react';
+import { Move, X, GripHorizontal } from 'lucide-react';
 import useEditorStore from '../../store/editorStore';
 
 const Sticker = ({ id, url, x, y, width, height }) => {
+  const [isResizing, setIsResizing] = useState(false);
   const {
     attributes,
     listeners,
@@ -20,17 +22,23 @@ const Sticker = ({ id, url, x, y, width, height }) => {
     position: 'absolute',
     left: x,
     top: y,
-    width,
-    height,
-    cursor: 'move',
+    cursor: isResizing ? 'se-resize' : 'move',
     touchAction: 'none'
   };
   
   const removeSticker = useEditorStore((state) => state.removeSticker);
+  const updateSticker = useEditorStore((state) => state.updateSticker);
   const setSelectedElement = useEditorStore((state) => state.setSelectedElement);
   
   const handleClick = () => {
     setSelectedElement({ type: 'sticker', id });
+  };
+
+  const handleResize = (e, { size }) => {
+    updateSticker(id, { 
+      width: size.width,
+      height: size.height
+    });
   };
   
   return (
@@ -53,12 +61,28 @@ const Sticker = ({ id, url, x, y, width, height }) => {
           <X size={16} />
         </button>
       </div>
-      <img
-        src={url}
-        alt="Sticker"
-        className="h-full w-full object-contain"
-        draggable={false}
-      />
+      
+      <ResizableBox
+        width={width}
+        height={height}
+        minConstraints={[50, 50]}
+        maxConstraints={[400, 400]}
+        onResize={handleResize}
+        onResizeStart={() => setIsResizing(true)}
+        onResizeStop={() => setIsResizing(false)}
+        handle={
+          <div className="absolute bottom-0 right-0 cursor-se-resize">
+            <GripHorizontal size={16} className="text-gray-600 dark:text-gray-400" />
+          </div>
+        }
+      >
+        <img
+          src={url}
+          alt="Sticker"
+          className="h-full w-full object-contain"
+          draggable={false}
+        />
+      </ResizableBox>
     </div>
   );
 };

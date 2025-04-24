@@ -1,137 +1,90 @@
-import React from 'react';
-import { HexColorPicker } from 'react-colorful';
-import {
-  Bold,
-  Italic,
-  Underline,
-  Trash2,
-  Plus,
-  Minus,
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { useDraggable } from '@dnd-kit/core';
+import { ResizableBox } from 'react-resizable';
+import { CSS } from '@dnd-kit/utilities';
+import { Move, X, GripHorizontal } from 'lucide-react';
 import useEditorStore from '../../store/editorStore';
 
-const Controls = () => {
+const Sticker = ({ id, url, x, y, width, height }) => {
+  const [isResizing, setIsResizing] = useState(false);
   const {
-    selectedElement,
-    textBoxes,
-    updateTextBox,
-    removeTextBox,
-    removeSticker,
-  } = useEditorStore();
-
-  if (!selectedElement) return null;
-
-  const isText = selectedElement.type === 'text';
-  const element = isText
-    ? textBoxes.find((box) => box.id === selectedElement.id)
-    : null;
-
-  const handleFontSizeChange = (delta) => {
-    if (!element) return;
-    const newSize = Math.max(12, Math.min(72, element.fontSize + delta));
-    updateTextBox(element.id, { fontSize: newSize });
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+  } = useDraggable({
+    id: `sticker-${id}`,
+    data: { type: 'sticker', id }
+  });
+  
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    position: 'absolute',
+    left: x,
+    top: y,
+    cursor: isResizing ? 'se-resize' : 'move',
+    touchAction: 'none'
+  };
+  
+  const removeSticker = useEditorStore((state) => state.removeSticker);
+  const updateSticker = useEditorStore((state) => state.updateSticker);
+  const setSelectedElement = useEditorStore((state) => state.setSelectedElement);
+  
+  const handleClick = () => {
+    setSelectedElement({ type: 'sticker', id });
   };
 
-  const handleStyleToggle = (style) => {
-    if (!element) return;
-    updateTextBox(element.id, {
-      fontStyle: {
-        ...element.fontStyle,
-        [style]: !element.fontStyle[style],
-      },
+  const handleResize = (e, { size }) => {
+    updateSticker(id, { 
+      width: size.width,
+      height: size.height
     });
   };
-
-  const handleColorChange = (color) => {
-    if (!element) return;
-    updateTextBox(element.id, { color });
-  };
-
-  const handleDelete = () => {
-    if (isText) {
-      removeTextBox(selectedElement.id);
-    } else if (selectedElement.type === 'sticker') {
-      removeSticker(selectedElement.id);
-    }
-  };
-
+  
   return (
-    <div className="absolute right-4 top-4 space-y-4 rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800 z-50">
-      {isText && element && (
-        <>
-          {/* Font Size Controls */}
-          <div className="flex items-center justify-between space-x-2">
-            <button
-              onClick={() => handleFontSizeChange(-2)}
-              className="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="Decrease font size"
-            >
-              <Minus size={16} />
-            </button>
-            <span className="min-w-[3ch] text-center font-medium">{element.fontSize}</span>
-            <button
-              onClick={() => handleFontSizeChange(2)}
-              className="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="Increase font size"
-            >
-              <Plus size={16} />
-            </button>
-          </div>
-
-          {/* Text Style Toggles */}
-          <div className="flex space-x-2">
-            <StyleToggle
-              active={element.fontStyle.bold}
-              icon={Bold}
-              onClick={() => handleStyleToggle('bold')}
-              label="Bold"
-            />
-            <StyleToggle
-              active={element.fontStyle.italic}
-              icon={Italic}
-              onClick={() => handleStyleToggle('italic')}
-              label="Italic"
-            />
-            <StyleToggle
-              active={element.fontStyle.underline}
-              icon={Underline}
-              onClick={() => handleStyleToggle('underline')}
-              label="Underline"
-            />
-          </div>
-
-          {/* Color Picker */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium">Text Color</label>
-            <HexColorPicker color={element.color} onChange={handleColorChange} />
-          </div>
-        </>
-      )}
-
-      {/* Delete Button */}
-      <button
-        onClick={handleDelete}
-        className="flex w-full items-center justify-center space-x-2 rounded-md bg-red-100 p-2 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
-        title="Delete selected element"
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={handleClick}
+      className="group relative"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute -top-8 left-0 hidden items-center space-x-2 rounded-md bg-white/90 p-1 shadow-lg group-hover:flex dark:bg-gray-800/90"
       >
-        <Trash2 size={16} />
-        <span>Delete</span>
-      </button>
+        <Move size={16} className="text-gray-600 dark:text-gray-400" />
+        <button
+          onClick={() => removeSticker(id)}
+          className="text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300"
+        >
+          <X size={16} />
+        </button>
+      </div>
+      
+      <ResizableBox
+        width={width}
+        height={height}
+        minConstraints={[50, 50]}
+        maxConstraints={[400, 400]}
+        onResize={handleResize}
+        onResizeStart={() => setIsResizing(true)}
+        onResizeStop={() => setIsResizing(false)}
+        handle={
+          <div className="absolute bottom-0 right-0 cursor-se-resize">
+            <GripHorizontal size={16} className="text-gray-600 dark:text-gray-400" />
+          </div>
+        }
+      >
+        <img
+          src={url}
+          alt="Sticker"
+          className="h-full w-full object-contain"
+          draggable={false}
+        />
+      </ResizableBox>
     </div>
   );
 };
 
-// Reusable toggle button for styles
-const StyleToggle = ({ active, icon: Icon, onClick, label }) => (
-  <button
-    onClick={onClick}
-    className={`rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-      active ? 'bg-primary-100 dark:bg-primary-900' : ''
-    }`}
-    title={label}
-  >
-    <Icon size={16} />
-  </button>
-);
-
-export default Controls;
+export default Sticker;
