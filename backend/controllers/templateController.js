@@ -9,12 +9,12 @@ const getTemplates = asyncHandler(async (req, res) => {
   res.json(templates);
 });
 
-// @desc    Get random meme template
+// @desc    Get random template
 // @route   GET /api/templates/random
 // @access  Public
 const getRandomTemplate = asyncHandler(async (req, res) => {
   const count = await Template.countDocuments();
-  
+
   if (count === 0) {
     res.status(404);
     throw new Error('No templates found');
@@ -30,7 +30,7 @@ const getRandomTemplate = asyncHandler(async (req, res) => {
   res.json(template);
 });
 
-// @desc    Search meme templates
+// @desc    Search templates
 // @route   GET /api/templates/search
 // @access  Public
 const searchTemplates = asyncHandler(async (req, res) => {
@@ -52,8 +52,4 @@ const searchTemplates = asyncHandler(async (req, res) => {
   res.json(templates);
 });
 
-export {
-  getTemplates,
-  getRandomTemplate,
-  searchTemplates,
-};
+export { getTemplates, getRandomTemplate, searchTemplates };

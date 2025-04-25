@@ -1,63 +1,36 @@
+// // models/memeModel.js
+// import mongoose from 'mongoose';
+
+// const memeSchema = new mongoose.Schema({
+//   imageUrl: { type: String, required: true },
+//   title: { type: String, required: true },
+//   tags: { type: [String], default: [] },
+//   usageCount: { type: Number, default: 0 },
+// }, { timestamps: true });
+
+// // Update the collection name to 'memes'
+// const Meme = mongoose.model('Meme', memeSchema, 'memes');
+
+// export default Meme;
+
+
 import mongoose from 'mongoose';
 
-const templateSchema = mongoose.Schema(
+// Define the schema for the memes collection
+const memeSchema = new mongoose.Schema(
   {
-    imageUrl: {
-      type: String,
-      required: true,
-    },
-    title: {
-      type: String,
-      required: true,
-    },
-    tags: {
-      type: [String],
-      default: [],
-    },
-    usageCount: {
-      type: Number,
-      default: 0,
-    },
-    width: {
-      type: Number,
-      required: true,
-      default: 500,
-    },
-    height: {
-      type: Number,
-      required: true,
-      default: 500,
-    },
-    defaultTextPositions: [{
-      text: String,
-      x: Number,
-      y: Number,
-      fontSize: Number,
-      color: String,
-      outlineColor: String,
-      outlineWidth: Number,
-      fontFamily: String,
-      bold: Boolean,
-      italic: Boolean,
-      width: Number,
-      height: Number,
-      rotation: Number,
-    }],
-    category: {
-      type: String,
-      enum: ['popular', 'new', 'classic', 'trending'],
-      default: 'new',
-    },
+    template_id: { type: String, required: true },
+    name: { type: String, required: true },
+    category: { type: String, required: true },
+    template_url: { type: String, required: true },
   },
   {
-    timestamps: true,
-    collection : 'memes',
+    timestamps: true, // Automatically adds createdAt and updatedAt fields
+    collection: 'memes', // Specify the collection name
   }
 );
 
-// Index for search functionality
-templateSchema.index({ title: 'text', tags: 'text', category: 1 });
+// Create the model and connect it to the 'memes' collection
+const Meme = mongoose.model('Meme', memeSchema, 'memes');
 
-const Template = mongoose.model('Template', templateSchema);
-
-export default Template;
+export default Meme;

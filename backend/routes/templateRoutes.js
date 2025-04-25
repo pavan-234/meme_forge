@@ -1,23 +1,19 @@
-// routes/templateRoutes.js
 import express from 'express';
 import {
   getTemplates,
   getRandomTemplate,
   searchTemplates,
-} from '../controllers/templateController.js';
+} from '../controllers/templateController.js'; // Adjust the path if needed
 
 const router = express.Router();
 
-// @route   GET /api/templates
-// @desc    Get all meme templates
+// Get all templates
 router.get('/', getTemplates);
 
-// @route   GET /api/templates/search?query=xyz
-// @desc    Search meme templates
-router.get('/search', searchTemplates);
-
-// @route   GET /api/templates/random
-// @desc    Get a random meme template
+// Get random template
 router.get('/random', getRandomTemplate);
+
+// Search templates
+router.get('/search', searchTemplates);
 
 export default router;
