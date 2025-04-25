@@ -1,13 +1,14 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/memes';
+// Base backend URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export interface MemeTemplate {
   _id: string;
   imageUrl: string;
   title: string;
   tags: string[];
-  usageCount: number;
+  usageCount?: number;
   createdAt: string;
 }
 
@@ -21,7 +22,7 @@ export interface Meme {
 
 // Get all memes
 export const getMemes = async (): Promise<Meme[]> => {
-  const response = await axios.get(API_URL);
+  const response = await axios.get(`${API_URL}/memes`);
   return response.data;
 };
 
@@ -37,25 +38,25 @@ export const uploadMeme = async (memeData: {
   title: string;
   tags: string[];
 }): Promise<Meme> => {
-  const response = await axios.post(API_URL, memeData);
+  const response = await axios.post(`${API_URL}/memes`, memeData);
   return response.data;
 };
 
 // Delete meme
 export const deleteMeme = async (id: string): Promise<{ message: string }> => {
-  const response = await axios.delete(`${API_URL}/${id}`);
+  const response = await axios.delete(`${API_URL}/memes/${id}`);
   return response.data;
 };
 
 // Get random meme template
 export const getRandomTemplate = async (): Promise<MemeTemplate> => {
-  const response = await axios.get(`${API_URL}/random`);
+  const response = await axios.get(`${API_URL}/templates/random`);
   return response.data;
 };
 
 // Search meme templates
 export const searchTemplates = async (query: string): Promise<MemeTemplate[]> => {
-  const response = await axios.get(`${API_URL}/search?query=${query}`);
+  const response = await axios.get(`${API_URL}/templates/search?query=${encodeURIComponent(query)}`);
   return response.data;
 };
 
@@ -65,6 +66,6 @@ export const saveGeneratedMeme = async (memeData: {
   title: string;
   tags: string[];
 }): Promise<Meme> => {
-  const response = await axios.post(`${API_URL}/generated`, memeData);
+  const response = await axios.post(`${API_URL}/memes/generated`, memeData);
   return response.data;
 };
