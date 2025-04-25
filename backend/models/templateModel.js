@@ -1,64 +1,63 @@
-// import mongoose from 'mongoose';
-
-// const templateSchema = mongoose.Schema(
-//   {
-//     template_id: {
-//       type: String,
-//       required: true,
-//       unique: true,
-//     },
-//     name: {
-//       type: String,
-//       required: true,
-//       trim: true,
-//     },
-//     category: {
-//       type: String,
-//       required: true,
-//       trim: true,
-//     },
-//     template_url: {
-//       type: String,
-//       required: true,
-//     },
-//     tags: [{
-//       type: String,
-//       trim: true,
-//     }],
-//     uses: {
-//       type: Number,
-//       default: 0,
-//     },
-//   },
-//   {
-//     timestamps: true,
-//   }
-// );
-
-// // Add text indexes for search functionality
-// templateSchema.index({ name: 'text', category: 'text', tags: 'text' });
-
-// const Template = mongoose.model('Template', templateSchema);
-
-// export default Template;
-
 import mongoose from 'mongoose';
 
-const templateSchema = new mongoose.Schema(
+const templateSchema = mongoose.Schema(
   {
-    template_id: { type: String, required: true },  // 🛠 Added this to match your dataset
-    name: { type: String, required: true },
-    category: { type: String, required: true },
-    template_url: { type: String, required: true },
-    // uses: { type: Number, default: 0 },
-    // tags: [{ type: String }],
+    imageUrl: {
+      type: String,
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
+    usageCount: {
+      type: Number,
+      default: 0,
+    },
+    width: {
+      type: Number,
+      required: true,
+      default: 500,
+    },
+    height: {
+      type: Number,
+      required: true,
+      default: 500,
+    },
+    defaultTextPositions: [{
+      text: String,
+      x: Number,
+      y: Number,
+      fontSize: Number,
+      color: String,
+      outlineColor: String,
+      outlineWidth: Number,
+      fontFamily: String,
+      bold: Boolean,
+      italic: Boolean,
+      width: Number,
+      height: Number,
+      rotation: Number,
+    }],
+    category: {
+      type: String,
+      enum: ['popular', 'new', 'classic', 'trending'],
+      default: 'new',
+    },
   },
   {
     timestamps: true,
-    collection: 'memes', // 👈 connect to your 'memes' collection
+    collection : 'memes',
   }
 );
 
-// Export the model
+// Index for search functionality
+templateSchema.index({ title: 'text', tags: 'text', category: 1 });
+
 const Template = mongoose.model('Template', templateSchema);
+
 export default Template;

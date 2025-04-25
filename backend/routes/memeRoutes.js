@@ -1,50 +1,35 @@
 import express from 'express';
-import multer from 'multer';
-import path from 'path';
 import {
   getMemes,
-  getMemeById,
-  createMeme,
+  uploadMeme,
   deleteMeme,
+  getRandomTemplate,
+  searchTemplates,
+  saveGeneratedMeme,
+  getTemplates,
 } from '../controllers/memeController.js';
 
 const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
-    );
-  },
-});
+// Get all memes
+router.get('/', getMemes);
 
-function checkFileType(file, cb) {
-  const filetypes = /jpeg|jpg|png|gif/;
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype);
+// Upload new meme
+router.post('/', uploadMeme);
 
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    cb('Error: Images only!');
-  }
-}
+// Delete meme
+router.delete('/:id', deleteMeme);
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5000000 }, // 5MB max
-  fileFilter: function (req, file, cb) {
-    checkFileType(file, cb);
-  },
-});
+// Get random meme template
+router.get('/random', getRandomTemplate);
 
-// Routes
-router.route('/').get(getMemes).post(upload.single('image'), createMeme);
-router.route('/:id').get(getMemeById).delete(deleteMeme);
+// Search meme templates
+router.get('/search', searchTemplates);
+
+// Save user-generated meme
+router.post('/generated', saveGeneratedMeme);
+
+// Get all templates
+router.get('/templates', getTemplates);
 
 export default router;
