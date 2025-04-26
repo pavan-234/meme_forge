@@ -16,7 +16,7 @@ const memeSchema = mongoose.Schema(
     },
     createdBy: {
       type: String,
-      default: 'anonymous',
+      default: 'Anonymous',
     },
   },
   {
@@ -24,6 +24,4 @@ const memeSchema = mongoose.Schema(
   }
 );
 
-const Meme = mongoose.model('Meme', memeSchema);
-
-export default Meme;
+export const Meme = mongoose.model('Meme', memeSchema);

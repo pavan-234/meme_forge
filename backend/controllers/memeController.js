@@ -1,128 +1,114 @@
 import { asyncHandler } from '../middleware/errorMiddleware.js';
-import Meme from '../models/memeModel.js';
-import Template from '../models/templateModel.js';
+import { Meme } from '../models/memeModel.js';
+import { Template } from '../models/templateModel.js';
 
-// @desc    Get all memes
-// @route   GET /api/memes
-// @access  Public
-const getMemes = asyncHandler(async (req, res) => {
-  const memes = await Meme.find({}).sort({ createdAt: -1 });
+// Get all memes
+export const getMemes = asyncHandler(async (req, res) => {
+  const memes = await Meme.find({}).sort('-createdAt');
   res.json(memes);
 });
 
-// @desc    Upload new meme
-// @route   POST /api/memes
-// @access  Public
-const uploadMeme = asyncHandler(async (req, res) => {
-  const { imageUrl, title, tags } = req.body;
-
-  if (!imageUrl || !title) {
-    res.status(400);
-    throw new Error('Please provide an image URL and title');
-  }
-
-  const meme = await Meme.create({
-    imageUrl,
-    title,
-    tags: tags || [],
-  });
-
-  res.status(201).json(meme);
+// Get all templates
+export const getTemplates = asyncHandler(async (req, res) => {
+  const templates = await Template.find({}).sort('-popularity');
+  res.json(templates);
 });
 
-// @desc    Delete meme
-// @route   DELETE /api/memes/:id
-// @access  Public
-const deleteMeme = asyncHandler(async (req, res) => {
-  const meme = await Meme.findById(req.params.id);
-
-  if (!meme) {
-    res.status(404);
-    throw new Error('Meme not found');
-  }
-
-  await meme.deleteOne();
-  res.json({ message: 'Meme removed' });
-});
-
-// @desc    Get random meme template
-// @route   GET /api/memes/random
-// @access  Public
-const getRandomTemplate = asyncHandler(async (req, res) => {
+// Get random template
+export const getRandomTemplate = asyncHandler(async (req, res) => {
   const count = await Template.countDocuments();
+  const random = Math.floor(Math.random() * count);
+  const template = await Template.findOne().skip(random);
   
-  if (count === 0) {
+  if (!template) {
     res.status(404);
     throw new Error('No templates found');
   }
   
-  const random = Math.floor(Math.random() * count);
-  const template = await Template.findOne().skip(random);
-  
-  // Increment usage count
-  template.usageCount += 1;
-  await template.save();
-  
   res.json(template);
 });
 
-// @desc    Search meme templates
-// @route   GET /api/memes/search
-// @access  Public
-const searchTemplates = asyncHandler(async (req, res) => {
+// Search templates
+export const searchTemplates = asyncHandler(async (req, res) => {
   const { query } = req.query;
   
   if (!query) {
-    res.status(400);
-    throw new Error('Please provide a search query');
+    return res.status(400).json({ message: 'Search query is required' });
   }
   
-  // Search by text index or tag matching
   const templates = await Template.find({
     $or: [
-      { $text: { $search: query } },
-      { tags: { $in: [query] } },
       { title: { $regex: query, $options: 'i' } },
+      { tags: { $regex: query, $options: 'i' } },
     ],
-  }).limit(20);
+  });
   
   res.json(templates);
 });
 
-// @desc    Save user-generated meme
-// @route   POST /api/memes/generated
-// @access  Public
-const saveGeneratedMeme = asyncHandler(async (req, res) => {
+// Create new meme
+export const createMeme = asyncHandler(async (req, res) => {
   const { imageUrl, title, tags } = req.body;
-
+  
   if (!imageUrl || !title) {
     res.status(400);
-    throw new Error('Please provide an image URL and title');
+    throw new Error('Please include imageUrl and title');
   }
-
+  
   const meme = await Meme.create({
     imageUrl,
     title,
     tags: tags || [],
   });
-
+  
   res.status(201).json(meme);
 });
 
-// @desc    Get all templates
-// @route   GET /api/memes/templates
-// @access  Public
-const getTemplates = asyncHandler(async (req, res) => {
-  const templates = await Template.find({}).sort({ usageCount: -1 });
-  res.json(templates);
+// Save generated meme
+export const saveGeneratedMeme = asyncHandler(async (req, res) => {
+  const { imageUrl, title, tags } = req.body;
+  
+  if (!imageUrl || !title) {
+    res.status(400);
+    throw new Error('Please include imageUrl and title');
+  }
+  
+  const meme = await Meme.create({
+    imageUrl,
+    title,
+    tags: tags || [],
+  });
+  
+  res.status(201).json(meme);
 });
 
-export {
-  getMemes,
-  uploadMeme,
-  deleteMeme,
-  getRandomTemplate,
-  searchTemplates,
-  saveGeneratedMeme,
-  getTemplates,
-};
+// Delete meme
+export const deleteMeme = asyncHandler(async (req, res) => {
+  const meme = await Meme.findById(req.params.id);
+  
+  if (!meme) {
+    res.status(404);
+    throw new Error('Meme not found');
+  }
+  
+  await meme.deleteOne();
+  res.json({ message: 'Meme removed' });
+});
+
+// Upload new template
+export const uploadTemplate = asyncHandler(async (req, res) => {
+  const { imageUrl, title, tags } = req.body;
+  
+  if (!imageUrl || !title) {
+    res.status(400);
+    throw new Error('Please include imageUrl and title');
+  }
+  
+  const template = await Template.create({
+    imageUrl,
+    title,
+    tags: tags || [],
+  });
+  
+  res.status(201).json(template);
+});

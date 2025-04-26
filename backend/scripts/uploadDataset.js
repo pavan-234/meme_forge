@@ -1,127 +1,98 @@
-// backend/uploadDataset.js
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import Template from '../models/templateModel.js';
+import { Template } from '../models/templateModel.js';
 
+// Load environment variables
 dotenv.config();
 
-const sampleTemplateData = [
+// Sample meme template dataset
+const memeTemplates = [
+  {
+    imageUrl: 'https://i.imgflip.com/1ur9b0.jpg',
+    title: 'Drake Hotline Bling',
+    tags: ['drake', 'hotline', 'bling', 'approval', 'rejection'],
+  },
   {
     imageUrl: 'https://i.imgflip.com/30b1gx.jpg',
-    title: 'Drake Hotline Bling',
-    tags: ['funny', 'music', 'popular'],
-    width: 500,
-    height: 500,
-    category: 'popular',
-    defaultTextPositions: [
-      {
-        text: "Something you don't like",
-        x: 350,
-        y: 100,
-        fontSize: 24,
-        color: '#FFFFFF',
-        outlineColor: '#000000',
-        outlineWidth: 2,
-        fontFamily: 'Impact',
-        bold: false,
-        italic: false,
-        width: 200,
-        height: 60,
-        rotation: 0,
-      },
-      {
-        text: 'Something you like',
-        x: 350,
-        y: 300,
-        fontSize: 24,
-        color: '#FFFFFF',
-        outlineColor: '#000000',
-        outlineWidth: 2,
-        fontFamily: 'Impact',
-        bold: false,
-        italic: false,
-        width: 200,
-        height: 60,
-        rotation: 0,
-      },
-    ],
+    title: 'Distracted Boyfriend',
+    tags: ['distracted', 'boyfriend', 'jealousy', 'unfaithful'],
   },
   {
-    imageUrl: 'https://images.pexels.com/photos/1440387/pexels-photo-1440387.jpeg',
-    title: 'Distracted Boyfriend',
-    tags: ['funny', 'relationships', 'popular'],
-    width: 600,
-    height: 400,
-    category: 'popular',
-    defaultTextPositions: [
-      {
-        text: 'New thing',
-        x: 350,
-        y: 100,
-        fontSize: 24,
-        color: '#FFFFFF',
-        outlineColor: '#000000',
-        outlineWidth: 2,
-        fontFamily: 'Impact',
-        bold: false,
-        italic: false,
-        width: 150,
-        height: 50,
-        rotation: 0,
-      },
-      {
-        text: 'You',
-        x: 200,
-        y: 250,
-        fontSize: 24,
-        color: '#FFFFFF',
-        outlineColor: '#000000',
-        outlineWidth: 2,
-        fontFamily: 'Impact',
-        bold: false,
-        italic: false,
-        width: 100,
-        height: 50,
-        rotation: 0,
-      },
-      {
-        text: 'Current responsibilities',
-        x: 500,
-        y: 200,
-        fontSize: 24,
-        color: '#FFFFFF',
-        outlineColor: '#000000',
-        outlineWidth: 2,
-        fontFamily: 'Impact',
-        bold: false,
-        italic: false,
-        width: 200,
-        height: 50,
-        rotation: 0,
-      },
-    ],
+    imageUrl: 'https://i.imgflip.com/1g8my4.jpg',
+    title: 'Two Buttons',
+    tags: ['buttons', 'choice', 'decision', 'red', 'sweating'],
   },
-  // Add more templates if needed...
+  {
+    imageUrl: 'https://i.imgflip.com/9vct.jpg',
+    title: 'Batman Slapping Robin',
+    tags: ['batman', 'robin', 'slap', 'comic'],
+  },
+  {
+    imageUrl: 'https://i.imgflip.com/4t0m5.jpg',
+    title: 'Hide the Pain Harold',
+    tags: ['hide', 'pain', 'harold', 'smile', 'old man'],
+  },
+  {
+    imageUrl: 'https://i.imgflip.com/3oevdk.jpg',
+    title: 'Woman Yelling at Cat',
+    tags: ['woman', 'cat', 'yelling', 'dinner', 'confused'],
+  },
+  {
+    imageUrl: 'https://i.imgflip.com/28j0te.jpg',
+    title: 'Change My Mind',
+    tags: ['change', 'mind', 'table', 'sign', 'debate'],
+  },
+  {
+    imageUrl: 'https://i.imgflip.com/1bij.jpg',
+    title: 'One Does Not Simply',
+    tags: ['one', 'does', 'not', 'simply', 'boromir', 'lord of the rings'],
+  },
+  {
+    imageUrl: 'https://i.imgflip.com/gtj5t.jpg',
+    title: 'Oprah You Get A',
+    tags: ['oprah', 'you', 'get', 'a', 'giveaway'],
+  },
+  {
+    imageUrl: 'https://i.imgflip.com/2hgfw.jpg',
+    title: 'Laughing Men in Suits',
+    tags: ['laughing', 'men', 'suits', 'business', 'pointing'],
+  },
+  {
+    imageUrl: 'https://i.imgflip.com/bh6xo.jpg',
+    title: 'Y U No',
+    tags: ['y u no', 'angry', 'rage comic'],
+  },
+  {
+    imageUrl: 'https://i.imgflip.com/64sz4.jpg',
+    title: 'Grandma Finds The Internet',
+    tags: ['grandma', 'internet', 'surprised', 'old', 'computer'],
+  },
 ];
 
-const uploadTemplates = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/memeforge');
-    console.log(`✅ MongoDB connected: ${conn.connection.host}`);
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(async () => {
+    console.log('MongoDB connected');
 
-    await Template.deleteMany();
-    console.log('🗑️  Existing templates deleted');
+    try {
+      // Check if templates already exist
+      const existingCount = await Template.countDocuments();
+      if (existingCount > 0) {
+        console.log(`Templates already exist (${existingCount}). Skipping upload.`);
+        process.exit(0);
+      }
 
-    const inserted = await Template.insertMany(sampleTemplateData);
-    console.log(`✅ ${inserted.length} template(s) inserted`);
-
-    await mongoose.disconnect();
-    console.log('🔌 MongoDB disconnected');
-    process.exit();
-  } catch (error) {
-    console.error(`❌ Upload failed: ${error.message}`);
+      // Upload templates
+      await Template.insertMany(memeTemplates);
+      console.log(`${memeTemplates.length} meme templates uploaded successfully`);
+      process.exit(0);
+    } catch (error) {
+      console.error('Error uploading templates:', error);
+      process.exit(1);
+    }
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
     process.exit(1);
-  }
-};
-
-uploadTemplates();
+  });
